@@ -1,33 +1,52 @@
+html {
+  font-size: 16px;
+}
+
 body {
   font-family: Arial, sans-serif;
   background: linear-gradient(135deg, #dbe6f6, #c5796d);
-  padding: 20px;
+  display: flex;
+  justify-content: flex-start;
   min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10rem;
+  font-size:2rem;
+
 }
 
 .title {
   text-align: center;
   color: #333;
-  margin-bottom: 15px;
   animation: fadeIn 1s ease;
 }
 
 .card {
-  background: white;
-  border-radius: 10px;
-  padding: 15px;
-  margin: 15px auto;
-  width: 320px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  background: #ede6e68a;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin: 1rem auto;
+  width: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  border: solid 0.2rem #00ebfd;
 }
-
+#resetBtn{
+    display: none;
+}
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-.form input, .form select, .form button {
+.form input,
+.form select,
+.form button {
   margin: 8px 0;
   padding: 10px;
   border-radius: 6px;
@@ -64,11 +83,23 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
