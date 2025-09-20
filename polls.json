@@ -1,4 +1,6 @@
 {
-  "polls": {},
+  "polls": {
+    "invectus": 0
+  },
   "comments": []
 }
