@@ -1,13 +1,4 @@
 {
-  "polls": {
-    "invectus apa": 0,
-    "invetus giv": 1
-  },
-  "comments": [
-    {
-      "brand": "invetus giv",
-      "name": "safy",
-      "note": "givodan more sdoft"
-    }
-  ]
+  "polls": {},
+  "comments": []
 }
