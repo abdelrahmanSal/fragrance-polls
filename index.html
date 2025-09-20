@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fragrance Polls</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Fragrance Polls</h1>
+    <p>Add perfumes, vote for their company and leave a short note with your name & number.</p>
+  </header>
+
+  <main>
+    <section class="add-card">
+      <h2>Add a new perfume</h2>
+      <form id="addPerfumeForm">
+        <label>
+          Perfume name
+          <input type="text" id="perfumeName" required />
+        </label>
+
+        <label>
+          Choose company (default options)
+          <select id="companySelect">
+            <option value="givodan">Givodan</option>
+            <option value="luze">Luze</option>
+            <option value="apa">Apa</option>
+          </select>
+        </label>
+
+        <button type="submit">Add perfume</button>
+      </form>
+    </section>
+
+    <section id="pollsSection">
+      <h2>Polls</h2>
+      <div id="pollsList" class="polls-list">
+        <!-- polls rendered here -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Demo: data stored to GitHub file via Vercel serverless API (requires setup)</small>
+  </footer>
+
+  <script src="/script.js"></script>
+</body>
+</html>
