@@ -1,6 +1,6 @@
 {
   "polls": {
-    "212sexy -- man": 0,
+    "212sexy -- man": 1,
     "212sexy  -- dulberg": 0,
     "212sexy--lutes": 0,
     "212vip luzy": 0,
@@ -19,5 +19,11 @@
     "bad boy -- givodan": 0,
     "badboy -- golden man": 0
   },
-  "comments": []
+  "comments": [
+    {
+      "brand": "212sexy -- man",
+      "name": "Abdelrahman",
+      "note": "جوده عاليه وثبات كويس فواحان ممتاز"
+    }
+  ]
 }
