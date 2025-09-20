@@ -8,7 +8,6 @@ async function api(method, body) {
   return res.json();
 }
 
-// Render polls + comments
 async function loadPolls() {
   const data = await api("GET");
 
@@ -30,7 +29,12 @@ async function loadPolls() {
   const commentsDiv = document.getElementById("comments");
   commentsDiv.innerHTML = "";
   data.comments.forEach(c => {
-    commentsDiv.innerHTML += `<div class="comment">${c}</div>`;
+    commentsDiv.innerHTML += `
+      <div class="comment">
+        <strong>${c.name}</strong><br>
+        ${c.brand} - ${c.note}
+      </div>
+    `;
   });
 }
 
@@ -48,9 +52,13 @@ document.getElementById("brandForm").addEventListener("submit", async (e) => {
 document.getElementById("voteForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const brand = document.getElementById("brand").value;
+  const name = document.getElementById("name").value.trim();
   const note = document.getElementById("note").value.trim();
-  await api("POST", { action: "vote", brand, note });
+
+  await api("POST", { action: "vote", brand, name, note });
+
   document.getElementById("note").value = "";
+  document.getElementById("name").value = "";
   loadPolls();
 });
 

@@ -1,29 +1,75 @@
-let polls = {};  // dynamic brands
-let comments = [];
+import fetch from "node-fetch";
 
-export default function handler(req, res) {
+const OWNER = process.env.GITHUB_OWNER;
+const REPO = process.env.GITHUB_REPO;
+const TOKEN = process.env.GITHUB_TOKEN;
+const BRANCH = process.env.BRANCH || "main";
+const FILE_PATH = "polls.json";
+
+// Helper to get polls.json from GitHub
+async function getPollsData() {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
+    headers: { Authorization: `token ${TOKEN}` }
+  });
+  const data = await res.json();
+  if (!data.content) return { polls: {}, comments: [] };
+  return JSON.parse(Buffer.from(data.content, "base64").toString("utf-8"));
+}
+
+// Helper to save polls.json to GitHub
+async function savePollsData(json) {
+  const existing = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
+    headers: { Authorization: `token ${TOKEN}` }
+  });
+  const existData = await existing.json();
+  const sha = existData.sha;
+
+  await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
+    method: "PUT",
+    headers: { Authorization: `token ${TOKEN}` },
+    body: JSON.stringify({
+      message: "Update polls",
+      content: Buffer.from(JSON.stringify(json, null, 2)).toString("base64"),
+      branch: BRANCH,
+      sha
+    })
+  });
+}
+
+// Main handler
+export default async function handler(req, res) {
   if (req.method === "GET") {
-    return res.status(200).json({ polls, comments });
+    const data = await getPollsData();
+    return res.status(200).json(data);
   }
 
   if (req.method === "POST") {
-    const { action, brand, note } = req.body;
+    const { action, brand, name, note } = req.body;
+    const data = await getPollsData();
 
     // Add Brand
     if (action === "addBrand") {
       if (!brand) return res.status(400).json({ error: "Brand required" });
-      if (!polls[brand]) polls[brand] = 0;
-      return res.status(200).json({ message: "Brand added", polls });
+      if (!data.polls[brand]) data.polls[brand] = 0;
+      await savePollsData(data);
+      return res.status(200).json({ message: "Brand added", polls: data.polls });
     }
 
     // Vote
     if (action === "vote") {
-      if (!brand || !polls.hasOwnProperty(brand)) {
+      if (!brand || !data.polls.hasOwnProperty(brand)) {
         return res.status(400).json({ error: "Invalid brand" });
       }
-      polls[brand] += 1;
-      if (note && note.trim()) comments.unshift(`${brand} - ${note}`);
-      return res.status(200).json({ message: "Vote recorded", polls, comments });
+      data.polls[brand] += 1;
+      if (note && note.trim()) {
+        data.comments.unshift({
+          brand,
+          name: name || "Anonymous",
+          note
+        });
+      }
+      await savePollsData(data);
+      return res.status(200).json({ message: "Vote recorded", polls: data.polls, comments: data.comments });
     }
 
     return res.status(400).json({ error: "Unknown action" });
