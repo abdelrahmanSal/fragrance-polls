@@ -9,33 +9,41 @@ async function api(method, body) {
 }
 
 async function loadPolls() {
-  const data = await api("GET");
+  try {
+    const data = await api("GET");
+    
+    const polls = data.polls || {}; // <-- fallback to empty object
+    const comments = data.comments || []; // <-- fallback to empty array
 
-  // Polls
-  const pollsDiv = document.getElementById("polls");
-  pollsDiv.innerHTML = "";
-  for (const [brand, votes] of Object.entries(data.polls)) {
-    pollsDiv.innerHTML += `<div class="poll">${brand}: ${votes} votes</div>`;
+    // Polls
+    const pollsDiv = document.getElementById("polls");
+    pollsDiv.innerHTML = "";
+    for (const [brand, votes] of Object.entries(polls)) {
+      pollsDiv.innerHTML += `<div class="poll">${brand}: ${votes} votes</div>`;
+    }
+
+    // Dropdown update
+    const select = document.getElementById("brand");
+    select.innerHTML = "";
+    Object.keys(polls).forEach(brand => {
+      select.innerHTML += `<option value="${brand}">${brand}</option>`;
+    });
+
+    // Comments
+    const commentsDiv = document.getElementById("comments");
+    commentsDiv.innerHTML = "";
+    comments.forEach(c => {
+      commentsDiv.innerHTML += `
+        <div class="comment">
+          <strong>${c.name}</strong><br>
+          ${c.brand} - ${c.note}
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    console.error("Error loading polls:", err);
   }
-
-  // Dropdown update
-  const select = document.getElementById("brand");
-  select.innerHTML = "";
-  Object.keys(data.polls).forEach(brand => {
-    select.innerHTML += `<option value="${brand}">${brand}</option>`;
-  });
-
-  // Comments always display
-  const commentsDiv = document.getElementById("comments");
-  commentsDiv.innerHTML = "";
-  data.comments.forEach(c => {
-    commentsDiv.innerHTML += `
-      <div class="comment">
-        <strong>${c.name}</strong><br>
-        ${c.brand} - ${c.note}
-      </div>
-    `;
-  });
 }
 
 // Add brand
