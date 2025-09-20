@@ -11,9 +11,9 @@ async function api(method, body) {
 async function loadPolls() {
   try {
     const data = await api("GET");
-    
-    const polls = data.polls || {}; // <-- fallback to empty object
-    const comments = data.comments || []; // <-- fallback to empty array
+
+    const polls = data.polls || {};
+    const comments = data.comments || [];
 
     // Polls
     const pollsDiv = document.getElementById("polls");
@@ -22,7 +22,7 @@ async function loadPolls() {
       pollsDiv.innerHTML += `<div class="poll">${brand}: ${votes} votes</div>`;
     }
 
-    // Dropdown update
+    // Dropdown
     const select = document.getElementById("brand");
     select.innerHTML = "";
     Object.keys(polls).forEach(brand => {
@@ -40,38 +40,60 @@ async function loadPolls() {
         </div>
       `;
     });
-
   } catch (err) {
     console.error("Error loading polls:", err);
   }
 }
 
 // Add brand
-document.getElementById("brandForm").addEventListener("submit", async (e) => {
+document.getElementById("brandForm").addEventListener("submit", async e => {
   e.preventDefault();
   const newBrand = document.getElementById("newBrand").value.trim();
   if (!newBrand) return;
-  await api("POST", { action: "addBrand", brand: newBrand });
-  document.getElementById("newBrand").value = "";
-  loadPolls();
+  try {
+    await api("POST", { action: "addBrand", brand: newBrand });
+    document.getElementById("newBrand").value = "";
+    loadPolls();
+  } catch (err) {
+    alert("Failed to add brand");
+  }
 });
 
 // Vote
-document.getElementById("voteForm").addEventListener("submit", async (e) => {
+document.getElementById("voteForm").addEventListener("submit", async e => {
   e.preventDefault();
   const brand = document.getElementById("brand").value;
   const name = document.getElementById("name").value.trim();
   const note = document.getElementById("note").value.trim();
 
-  await api("POST", { action: "vote", brand, name, note });
+  if (!brand || !note) {
+    alert("Please select a brand and write a note!");
+    return;
+  }
 
-  document.getElementById("note").value = "";
-  document.getElementById("name").value = "";
-  loadPolls();
+  try {
+    await api("POST", { action: "vote", brand, name, note });
+    document.getElementById("note").value = "";
+    document.getElementById("name").value = "";
+    loadPolls(); // Refresh after successful vote
+  } catch (err) {
+    alert("Failed to vote!");
+  }
 });
 
-// Refresh every 5s to keep comments updated
+// Reset button
+document.getElementById("resetBtn").addEventListener("click", async () => {
+  if (!confirm("Are you sure you want to reset all polls?")) return;
+  try {
+    await api("POST", { action: "reset" });
+    loadPolls();
+  } catch (err) {
+    alert("Failed to reset polls!");
+  }
+});
+
+// Refresh polls/comments every 5s
 setInterval(loadPolls, 5000);
 
-// Init
+// Initial load
 loadPolls();

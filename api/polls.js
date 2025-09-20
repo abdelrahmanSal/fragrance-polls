@@ -6,17 +6,22 @@ const TOKEN = process.env.GITHUB_TOKEN;
 const BRANCH = process.env.BRANCH || "main";
 const FILE_PATH = "polls.json";
 
-// Helper to get polls.json from GitHub
+// Fetch polls.json from GitHub
 async function getPollsData() {
-  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
-    headers: { Authorization: `token ${TOKEN}` }
-  });
-  const data = await res.json();
-  if (!data.content) return { polls: {}, comments: [] };
-  return JSON.parse(Buffer.from(data.content, "base64").toString("utf-8"));
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
+      headers: { Authorization: `token ${TOKEN}` }
+    });
+    const data = await res.json();
+    if (!data.content) return { polls: {}, comments: [] };
+    return JSON.parse(Buffer.from(data.content, "base64").toString("utf-8"));
+  } catch (err) {
+    console.error("Error fetching polls.json:", err);
+    return { polls: {}, comments: [] };
+  }
 }
 
-// Helper to save polls.json to GitHub
+// Save polls.json to GitHub
 async function savePollsData(json) {
   const existing = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
     headers: { Authorization: `token ${TOKEN}` }
@@ -36,7 +41,6 @@ async function savePollsData(json) {
   });
 }
 
-// Main handler
 export default async function handler(req, res) {
   if (req.method === "GET") {
     const data = await getPollsData();
@@ -47,7 +51,7 @@ export default async function handler(req, res) {
     const { action, brand, name, note } = req.body;
     const data = await getPollsData();
 
-    // Add Brand
+    // Add brand
     if (action === "addBrand") {
       if (!brand) return res.status(400).json({ error: "Brand required" });
       if (!data.polls[brand]) data.polls[brand] = 0;
@@ -70,6 +74,13 @@ export default async function handler(req, res) {
       }
       await savePollsData(data);
       return res.status(200).json({ message: "Vote recorded", polls: data.polls, comments: data.comments });
+    }
+
+    // Reset
+    if (action === "reset") {
+      const empty = { polls: {}, comments: [] };
+      await savePollsData(empty);
+      return res.status(200).json({ message: "Polls reset", polls: {}, comments: [] });
     }
 
     return res.status(400).json({ error: "Unknown action" });
