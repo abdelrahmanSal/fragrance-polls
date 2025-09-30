@@ -13,11 +13,11 @@ async function getPollsData() {
       headers: { Authorization: `token ${TOKEN}` }
     });
     const data = await res.json();
-    if (!data.content) return { polls: {}, comments: [] };
+    if (!data.content) return { polls: [], comments: [] };
     return JSON.parse(Buffer.from(data.content, "base64").toString("utf-8"));
   } catch (err) {
     console.error("Error fetching polls.json:", err);
-    return { polls: {}, comments: [] };
+    return { polls: [], comments: [] };
   }
 }
 
@@ -48,39 +48,55 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { action, brand, name, note } = req.body;
+    const { action, name, brand, note, info, id } = req.body;
     const data = await getPollsData();
 
-    // Add brand
+    // Add perfume (brand entry)
     if (action === "addBrand") {
-      if (!brand) return res.status(400).json({ error: "Brand required" });
-      if (!data.polls[brand]) data.polls[brand] = 0;
+      if (!brand || !name) {
+        return res.status(400).json({ error: "Perfume name and brand required" });
+      }
+
+      const newPerfume = {
+        name,                           // perfume name (e.g. invectus)
+        brand,                          // company (e.g. givodan)
+        value: 0,                       // votes start at 0
+        id: Math.random().toString(36).substr(2, 9), // random ID
+        info: info || ""                // optional perfume info
+      };
+
+      data.polls.push(newPerfume);
       await savePollsData(data);
-      return res.status(200).json({ message: "Brand added", polls: data.polls });
+
+      return res.status(200).json({ message: "Perfume added", polls: data.polls });
     }
 
     // Vote
     if (action === "vote") {
-      if (!brand || !data.polls.hasOwnProperty(brand)) {
-        return res.status(400).json({ error: "Invalid brand" });
+      const perfume = data.polls.find(p => p.id === id);
+      if (!perfume) {
+        return res.status(400).json({ error: "Invalid perfume id" });
       }
-      data.polls[brand] += 1;
+
+      perfume.value += 1;
+
       if (note && note.trim()) {
         data.comments.unshift({
-          brand,
-          name: name || "Anonymous",
+          brand: perfume.name,
+          name: req.body.name || "Anonymous",
           note
         });
       }
+
       await savePollsData(data);
       return res.status(200).json({ message: "Vote recorded", polls: data.polls, comments: data.comments });
     }
 
     // Reset
     if (action === "reset") {
-      const empty = { polls: {}, comments: [] };
+      const empty = { polls: [], comments: [] };
       await savePollsData(empty);
-      return res.status(200).json({ message: "Polls reset", polls: {}, comments: [] });
+      return res.status(200).json({ message: "Polls reset", polls: [], comments: [] });
     }
 
     return res.status(400).json({ error: "Unknown action" });
