@@ -1,105 +1,65 @@
-import fetch from "node-fetch";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
-const OWNER = process.env.GITHUB_OWNER;
-const REPO = process.env.GITHUB_REPO;
-const TOKEN = process.env.GITHUB_TOKEN;
-const BRANCH = process.env.BRANCH || "main";
-const FILE_PATH = "polls.json";
+const filePath = path.join(process.cwd(), "polls.json");
 
-// Fetch polls.json from GitHub
-async function getPollsData() {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
-      headers: { Authorization: `token ${TOKEN}` }
-    });
-    const data = await res.json();
-    if (!data.content) return { polls: [], comments: [] };
-    return JSON.parse(Buffer.from(data.content, "base64").toString("utf-8"));
-  } catch (err) {
-    console.error("Error fetching polls.json:", err);
-    return { polls: [], comments: [] };
-  }
+// Helper to read polls.json
+function readData() {
+  if (!fs.existsSync(filePath)) return { perfumes: [], comments: [] };
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-// Save polls.json to GitHub
-async function savePollsData(json) {
-  const existing = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}?ref=${BRANCH}`, {
-    headers: { Authorization: `token ${TOKEN}` }
-  });
-  const existData = await existing.json();
-  const sha = existData.sha;
-
-  await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`, {
-    method: "PUT",
-    headers: { Authorization: `token ${TOKEN}` },
-    body: JSON.stringify({
-      message: "Update polls",
-      content: Buffer.from(JSON.stringify(json, null, 2)).toString("base64"),
-      branch: BRANCH,
-      sha
-    })
-  });
+// Helper to write polls.json
+function writeData(data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-export default async function handler(req, res) {
-  if (req.method === "GET") {
-    const data = await getPollsData();
+export default function handler(req, res) {
+  const { method } = req;
+  let data = readData();
+
+  if (method === "GET") {
     return res.status(200).json(data);
   }
 
-  if (req.method === "POST") {
-    const { action, name, brand, note, info, id } = req.body;
-    const data = await getPollsData();
+  if (method === "POST") {
+    const { action } = req.body;
 
-    // Add perfume (brand entry)
+    // Add new perfume
     if (action === "addBrand") {
-      if (!brand || !name) {
-        return res.status(400).json({ error: "Perfume name and brand required" });
-      }
-
+      const { name, brand, info } = req.body;
       const newPerfume = {
-        name,                           // perfume name (e.g. invectus)
-        brand,                          // company (e.g. givodan)
-        value: 0,                       // votes start at 0
-        id: Math.random().toString(36).substr(2, 9), // random ID
-        info: info || ""                // optional perfume info
+        id: uuidv4(),
+        name,
+        brand,
+        info: info || "",
+        value: 0,
       };
-
-      data.polls.push(newPerfume);
-      await savePollsData(data);
-
-      return res.status(200).json({ message: "Perfume added", polls: data.polls });
+      data.perfumes.push(newPerfume);
+      writeData(data);
+      return res.status(200).json({ message: "Perfume added", newPerfume });
     }
 
-    // Vote
+    // Add vote
     if (action === "vote") {
-      const perfume = data.polls.find(p => p.id === id);
+      const { id, note, name } = req.body;
+      const perfume = data.perfumes.find((p) => p.id === id);
       if (!perfume) {
-        return res.status(400).json({ error: "Invalid perfume id" });
+        return res.status(404).json({ error: "Perfume not found" });
       }
-
-      perfume.value += 1;
-
-      if (note && note.trim()) {
-        data.comments.unshift({
-          brand: perfume.name,
-          name: req.body.name || "Anonymous",
-          note
-        });
-      }
-
-      await savePollsData(data);
-      return res.status(200).json({ message: "Vote recorded", polls: data.polls, comments: data.comments });
+      perfume.value++;
+      data.comments.push({ perfumeId: id, note, name });
+      writeData(data);
+      return res.status(200).json({ message: "Vote added", perfume });
     }
 
-    // Reset
+    // Reset all data
     if (action === "reset") {
-      const empty = { polls: [], comments: [] };
-      await savePollsData(empty);
-      return res.status(200).json({ message: "Polls reset", polls: [], comments: [] });
+      data = { perfumes: [], comments: [] };
+      writeData(data);
+      return res.status(200).json({ message: "Reset done" });
     }
-
-    return res.status(400).json({ error: "Unknown action" });
   }
 
   res.status(405).json({ error: "Method not allowed" });
