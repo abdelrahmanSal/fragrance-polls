@@ -8,30 +8,44 @@
 <body>
   <h1 class="title">Perfume Polls</h1>
 
+  <!-- Results -->
   <div id="polls" class="card"></div>
 
+  <!-- Add New Perfume -->
   <form id="brandForm" class="card form">
-    <h3>Add New Brand</h3>
-    <input type="text" id="newBrand" placeholder="Brand name" required>
-    <button type="submit">Add Brand</button>
+    <h3>Add New Perfume</h3>
+    <label for="newName">Perfume Name:</label>
+    <input type="text" id="newName" placeholder="e.g. Invictus" required>
+
+    <label for="newBrand">Brand:</label>
+    <input type="text" id="newBrand" placeholder="e.g. Givaudan" required>
+
+    <label for="newInfo">Info:</label>
+    <input type="text" id="newInfo" placeholder="Short description (optional)">
+
+    <button type="submit">Add Perfume</button>
   </form>
 
+  <!-- Voting -->
   <form id="voteForm" class="card form">
     <h3>Vote</h3>
-    <label for="brand">Choose a Brand:</label>
+
+    <label for="brand">Choose a Perfume:</label>
     <select id="brand" name="brand"></select>
 
-    <label for="name">Name:</label>
-    <input type="text" id="name" name="name" placeholder="Your name">
+    <label for="name">Your Name:</label>
+    <input type="text" id="name" name="name" placeholder="Enter your name" required>
 
-    <label for="note">Note:</label>
-    <input type="text" id="note" name="note" placeholder="Write your number or comment">
+    <label for="note">Comment:</label>
+    <input type="text" id="note" name="note" placeholder="Write your comment">
 
     <button type="submit">Vote</button>
   </form>
 
+  <!-- Reset -->
   <button id="resetBtn" class="card">Reset Polls</button>
 
+  <!-- Comments -->
   <h2 class="title">Comments</h2>
   <div id="comments" class="card comments"></div>
 
