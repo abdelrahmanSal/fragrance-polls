@@ -12,21 +12,26 @@ async function loadPolls() {
   try {
     const data = await api("GET");
 
-    const polls = data.polls || {};
+    const polls = data.polls || [];
     const comments = data.comments || [];
 
     // Polls
     const pollsDiv = document.getElementById("polls");
     pollsDiv.innerHTML = "";
-    for (const [brand, votes] of Object.entries(polls)) {
-      pollsDiv.innerHTML += `<div class="poll">${brand}: ${votes} votes</div>`;
-    }
+    polls.forEach(p => {
+      pollsDiv.innerHTML += `
+        <div class="poll">
+          <strong>${p.name}</strong> (${p.brand}) - ${p.value} votes
+          <br><small>${p.info}</small>
+        </div>
+      `;
+    });
 
     // Dropdown
     const select = document.getElementById("brand");
     select.innerHTML = "";
-    Object.keys(polls).forEach(brand => {
-      select.innerHTML += `<option value="${brand}">${brand}</option>`;
+    polls.forEach(p => {
+      select.innerHTML += `<option value="${p.id}">${p.name} (${p.brand})</option>`;
     });
 
     // Comments
@@ -48,34 +53,39 @@ async function loadPolls() {
 // Add brand
 document.getElementById("brandForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const newBrand = document.getElementById("newBrand").value.trim();
-  if (!newBrand) return;
+  const name = document.getElementById("newName").value.trim();
+  const brand = document.getElementById("newBrand").value.trim();
+  const info = document.getElementById("newInfo").value.trim();
+
+  if (!name || !brand) return;
   try {
-    await api("POST", { action: "addBrand", brand: newBrand });
+    await api("POST", { action: "addBrand", name, brand, info });
+    document.getElementById("newName").value = "";
     document.getElementById("newBrand").value = "";
+    document.getElementById("newInfo").value = "";
     loadPolls();
   } catch (err) {
-    alert("Failed to add brand");
+    alert("Failed to add perfume");
   }
 });
 
 // Vote
 document.getElementById("voteForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const brand = document.getElementById("brand").value;
+  const id = document.getElementById("brand").value;
   const name = document.getElementById("name").value.trim();
   const note = document.getElementById("note").value.trim();
 
-  if (!brand || !note) {
-    alert("Please select a brand and write a note!");
+  if (!id || !note) {
+    alert("Please select a perfume and write a note!");
     return;
   }
 
   try {
-    await api("POST", { action: "vote", brand, name, note });
+    await api("POST", { action: "vote", id, name, note });
     document.getElementById("note").value = "";
     document.getElementById("name").value = "";
-    loadPolls(); // Refresh after successful vote
+    loadPolls();
   } catch (err) {
     alert("Failed to vote!");
   }
